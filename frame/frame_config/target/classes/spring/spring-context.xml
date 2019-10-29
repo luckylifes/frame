@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- spring schema(spring xml的文档结构的描述) -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-4.0.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+
+	<!-- 自动扫包，完成Bean的创建和自动依赖注入 -->
+	<context:component-scan base-package="com.dj.cn">
+		<!-- 去除@Controller的创建和注入 防止Spring容器的多次加载Bean所产生的异常  -->
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+	</context:component-scan>
+
+	<!-- 加入Properties文件读取 -->
+	<context:property-placeholder location="classpath*:props/**/*.properties"/>
+
+	<!-- 配置数据源-使用c3p0连接池 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+		<property name="driverClass" value="${jdbc.driverClassName}"/>
+		<property name="jdbcUrl" value="${jdbc.url}"/>
+		<property name="user" value="${jdbc.username}"/>
+		<property name="password" value="${jdbc.password}"/>
+		<!--连接池中保留的最大连接数。默认值: 15 -->
+		<property name="maxPoolSize" value="20"/>
+		<!-- 连接池中保留的最小连接数，默认为：3 -->
+		<property name="minPoolSize" value="2"/>
+		<!--最大空闲时间，60秒内未使用则连接被丢弃。若为0则永不丢弃。默认值: 0 -->
+		<property name="maxIdleTime" value="30"/>
+	</bean>
+
+	<!--MyBatis Plus配置 -->
+	<bean id="sqlSessionFactory" class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
+		<!-- 注入数据源 -->
+		<property name="dataSource" ref="dataSource"/>
+		<!-- 加载Mybatis相关配置 -->
+		<property name="configLocation" value="classpath:mybatis/mybatis-config.xml"/>
+		<!-- 配置类型别名
+			   该包路径下的类在Mapper文件中可以只写类名
+		 -->
+		<property name="typeAliasesPackage" value="com.dj.cn.domain"/><!-- 扫描实体类 -->
+		<!-- mapper文件 放到 resources 配置文件 配置 -->
+		<property name="mapperLocations" value="classpath:mapper/*.xml"/>
+		<property name="globalConfig">
+			<bean class="com.baomidou.mybatisplus.core.config.GlobalConfig">
+				<!-- 全局默认主键类型 -->
+				<property name="dbConfig">
+					<bean class="com.baomidou.mybatisplus.core.config.GlobalConfig.DbConfig">
+						<!--
+                           AUTO->`0`("数据库ID自增")
+                            INPUT->`1`(用户输入ID")
+                           ID_WORKER->`2`("全局唯一ID")
+                           UUID->`3`("全局唯一ID")
+                       -->
+						<property name="idType" value="AUTO"/>
+					</bean>
+				</property>
+				<property name="refresh" value="true"/>
+			</bean>
+		</property>
+		<property name="plugins">
+			<array>
+				<!-- 分页插件配置 -->
+				<bean id="paginationInterceptor" class="com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor">
+					<property name="dialectType" value="mysql"/>
+				</bean>
+			</array>
+		</property>
+		<!-- <property name="mapperLocations">
+			<list>
+				<value>classpath:mapper/*.xml</value>
+			</list>
+		</property> -->
+
+	</bean>
+
+	<!-- Mapper自动扫包注入 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 动态代理方式 -->
+		<property name="basePackage" value="com.dj.cn.mapper"/>
+	</bean>
+
+	<!-- 配置事务管理器 -->
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+
+	<!-- 配置事务传播属性 -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<!-- 配置事务的自动提交和回滚 -->
+			<tx:method name="add*" propagation="REQUIRED" rollback-for="Exception"/>
+			<tx:method name="save*" propagation="REQUIRED" rollback-for="Exception"/>
+			<tx:method name="insert*" propagation="REQUIRED" rollback-for="Exception"/>
+			<tx:method name="update*" propagation="REQUIRED" rollback-for="Exception"/>
+			<tx:method name="modify*" propagation="REQUIRED" rollback-for="Exception"/>
+			<tx:method name="register*" propagation="REQUIRED" rollback-for="Exception"/>
+			<tx:method name="del*" propagation="REQUIRED" rollback-for="Exception"/>
+			<!-- 除上述方法名开头的事务配置为只读事务，只读事务可以提高效率 -->
+			<tx:method name="*" read-only="true"/>
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 配置事务切面,并关联事务传播属性 -->
+	<aop:config>
+		<aop:pointcut expression="execution(* com.dj.cn.service.*.*.*(..))" id="txPointCut"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointCut" order="1"/>
+	</aop:config>
+	
+</beans>

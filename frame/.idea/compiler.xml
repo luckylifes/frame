@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="frame_api" />
+        <module name="frame_common" />
+        <module name="frame_config" />
+        <module name="frame_domain" />
+        <module name="frame_mapper" />
+        <module name="frame_provide" />
+        <module name="frame_web" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="frame" target="1.8" />
+      <module name="frame_api" target="1.8" />
+      <module name="frame_common" target="1.8" />
+      <module name="frame_config" target="1.8" />
+      <module name="frame_domain" target="1.8" />
+      <module name="frame_mapper" target="1.8" />
+      <module name="frame_provide" target="1.8" />
+      <module name="frame_web" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
